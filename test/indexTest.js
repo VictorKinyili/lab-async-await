@@ -25,6 +25,19 @@ const dom = new JSDOM(html, {
 const fetchPkg = 'node_modules/whatwg-fetch/dist/fetch.umd.js';
 dom.window.eval(fs.readFileSync(fetchPkg, 'utf-8'));
 
+const samplePosts = [{
+  title: 'sunt aut facere repellat provident occaecati excepturi optio reprehenderit',
+  body: 'quia et suscipit\nsuscipit recusandae consequuntur expedita et cum\nreprehenderit molestiae ut ut quas totam\nnostrum rerum est autem sunt rem eveniet architecto'
+}];
+let requestedUrl;
+dom.window.fetch = async url => {
+  requestedUrl = url;
+  return {
+    ok: true,
+    json: async () => samplePosts
+  };
+};
+
 // Inject the transformed JavaScript into the virtual DOM
 const scriptElement = dom.window.document.createElement("script");
 scriptElement.textContent = transformedScript;
@@ -43,15 +56,15 @@ global.XMLHttpRequest = dom.window.XMLHttpRequest;
 describe('Asynchronous Fetching ', () => {
   it('should fetch to external api and add information to page', async() => {
     await new Promise(resolve => setTimeout(resolve, 200)); 
-    let postDisplay = document.querySelector("#post-list")
-    expect(postDisplay.innerHTML).to.include('sunt aut')
-    
+    const postDisplay = document.querySelector("#post-list");
+    expect(requestedUrl).to.equal('https://jsonplaceholder.typicode.com/posts');
+    expect(postDisplay.innerHTML).to.include('sunt aut');
   })
   it('should create an h1 and p element to add', async() => {
     await new Promise(resolve => setTimeout(resolve, 200)); 
-    let h1 = document.querySelector("h1")
-    let p = document.querySelector("p")
-    expect(h1.textContent).to.include("sunt aut facere repellat")
-    expect(p.textContent).to.include("quia et suscipit\nsuscipit")
+    const h1 = document.querySelector("h1");
+    const p = document.querySelector("p");
+    expect(h1.textContent).to.include("sunt aut facere repellat");
+    expect(p.textContent).to.include("quia et suscipit\nsuscipit");
   })
 })
